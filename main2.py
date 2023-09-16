@@ -14,12 +14,34 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import OneHotEncoder
 from xgboost import XGBRFRegressor
 
+# calculating metrics to evaluate the model 
+def find_metrics(y_test, y_pred):
+    # calculate RMSE
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    abc = 'Root Mean Squared Error (RMSE): ' + str(rmse)
+    st.write(abc)
+    # calculate R2 Score
+    r2 = r2_score(y_test, y_pred)
+    abd = 'R2 Score: ' + str(r2)
+    st.write(abd)
 
 
+# graph for plotting the results for regression predictions
+def plot_actual_vs_predicted(y_test, y_pred):
+    fig, ax = plt.subplots()
+    plt.scatter(y_test, y_pred, alpha=0.5, label='Scatter Plot')
+
+    # add a line representing a perfect fit
+    plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', linestyle='--', linewidth=2, label='Perfect Fit')
+    plt.title('Actual vs. Predicted Values')
+    plt.xlabel('Actual Values')
+    plt.ylabel('Predicted Values')
+    plt.legend()
+    st.pyplot(fig)
 
 # one-hot encoding function
 def one_hot_encode_data(data, columns_to_encode):
-    # Use pd.get_dummies to one-hot encode specified columns
+    # use pd.get_dummies to one-hot encode specified columns
     encoded_def = pd.get_dummies(data, columns=columns_to_encode, drop_first=True)
     return encoded_def
 
@@ -93,9 +115,9 @@ def main():
             st.sidebar.header("Would you like to visualize your new data now?")
         
         # generating graphs
+        st.sidebar.header("Would you like to sta your new data now?")
         graph_name = st.sidebar.selectbox("Select Graphs to View",
-                            ("Heat Map", "Pair Plot", "Hist Plot"))
-        
+                            ("","Heat Map", "Pair Plot", "Hist Plot"))
         if graph_name == 'Heat Map':
             st.subheader("Heat Map")
             fig, ax = plt.subplots()
@@ -110,12 +132,46 @@ def main():
             fig,ax = plt.subplots()
             sns.histplot(new_df['price'], kde=True, stat="density", kde_kws=dict(cut=3), alpha=.4, edgecolor=(1, 1, 1, .4))
             st.pyplot(fig)
+
+        st.subheader("Performing Feature Scaling")
+        selected_features = st.multiselect("Select features for scaling", new_df.columns)
+
+        if st.button("Standardize"):
             
+            X = new_df[selected_features]
+            y = new_df.drop(columns=selected_features).values
+
+            # using sci-learn to split test and train data
+            st.session_state.X_train, st.session_state.X_test, st.session_state.y_train, st.session_state.y_test = train_test_split(X, y, test_size=0.33, random_state=369)
+
+            # applying scaling to the model
+            scaler = StandardScaler()
+            st.session_state.X_train = scaler.fit_transform(st.session_state.X_train)
+            st.session_state.X_test = scaler.transform(st.session_state.X_test)
+
+            st.subheader("Standardized columns")
+            st.table(st.session_state.X_train[:5])
+        
         # generating regression models
         classifier_name = st.sidebar.selectbox("Select Regression Model",
-                                        ("LinearRegression", "RandomForest", "XGBRFRegressor"))
+                                        (" ","Linear Regression", "Random Forest", "XGBRF Regressor"))
+        
+        if classifier_name == 'Linear Regression':
+            st.subheader("Linear Regression Result")
+            regressor = LinearRegression()
+            regressor.fit(st.session_state.X_train, st.session_state.y_train)
+            y_pred = regressor.predict(st.session_state.X_test)
+            plot_actual_vs_predicted(st.session_state.y_test, y_pred)
+            find_metrics(st.session_state.y_test, y_pred)
 
-
+        elif graph_name == 'Random Forest':
+            st.subheader("Random Forest Result")
+            
+            
+        elif graph_name == 'XGBRF Regressor':
+            st.subheader("XGBRF Regressor Result")
+            
+            
 
 if __name__ == '__main__':
     main()
