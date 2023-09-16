@@ -13,62 +13,77 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import OneHotEncoder
 from xgboost import XGBRFRegressor
 
-encoded_data = None
+
 
 # one-hot-encoding data function
+#def adding_more_columns(data):
+    
+
+  #  return new_data
+
+@st.cache_data
 def one_hot_encode_data(data, columns_to_encode):
-    encoder = OneHotEncoder(sparse=False, drop=None)
-    encode_data = encoder.fit_transform(data[columns_to_encode])
-    encoded_df = pd.DataFrame(encode_data, columns=encoder.get_feature_names_out(input_features=columns_to_encode))
-    return encoded_df
+    # Use pd.get_dummies to one-hot encode specified columns
+    encoded_def = pd.get_dummies(data, columns=columns_to_encode, drop_first=True)
+    return encoded_def
 
-st.title("Regression Model")
+def main():
+    
+    st.title("Regression Model")
+    st.write("""
+    # Explore different Regression Models
+    Which one gives the best result for your data?
+    """)
+    # for creating a selection box with options
+    uploaded_file = st.file_uploader("Upload a CSV file", accept_multiple_files=True)
+    for uploaded_file in uploaded_file:
+        st.write("Data of file:", uploaded_file.name)
+        raw_data = pd.read_csv(uploaded_file.name)
+        st.write(raw_data.head())
 
-st.write("""
-# Explore different Regression Models
-Which one gives the best result for your data?
-""")
+    # get a list of categorical columns from the user
+    st.sidebar.header("Select categorical columns for One-Hot Encoding")
+    categorical_columns = st.sidebar.multiselect("Select columns", raw_data.columns)
 
-# for creating a selection box with options
-uploaded_file = st.file_uploader("Upload a CSV file", accept_multiple_files=True)
-for uploaded_file in uploaded_file:
-    bytes_data = uploaded_file.read()
-    st.write("Data of file:", uploaded_file.name)
-    raw_data = pd.read_csv(uploaded_file.name)
-    st.write(raw_data.head())
-
- # get a list of categorical columns from the user
-st.sidebar.header("Select categorical columns for One-Hot Encoding")
-categorical_columns = st.sidebar.multiselect("Select columns", raw_data.columns)
-
-if st.sidebar.button("Run One-Hot Encode"):
-    if len(categorical_columns) > 0:
+    if st.sidebar.button("Run One-Hot Encode"):
         encoded_df = one_hot_encode_data(raw_data, categorical_columns)
-        other_columns = raw_data.select_dtypes(include=['int64', 'float64']).columns
-        encoded_data = pd.concat([raw_data[other_columns], encoded_df], axis=1)
         st.subheader("All data in numericals now")
-        st.write(encoded_data.head())
-    else:
-        st.warning("Please select at least one categorical column for encoding.")
+        st.write(encoded_df.head())
+        st.sidebar.header("Want to find insights from your CSV?")
+        if encoded_df is not None:
+            if st.sidebar.button("Generate Describe Table"):
+                st.subheader("Describe Table")
+                st.write(encoded_df.describe())
+            if st.sidebar.button("Generate Info Table"):
+                st.subheader("Info Table")
+                st.write(encoded_df.info())
+            if st.sidebar.button("Generate IsNull Table"):
+                st.subheader("")
+                st.write(encoded_df.isnull().sum())
+        else:
+            st.sidebar.warning("No data to take insight from. Please click 'Run One-Hot Encode' to generate encoded data.")
 
+    # get a list of categorical columns from the user
+    st.subheader("Select columns you want to join to reduce dimensionality")
+    categorical_columns = st.multiselect("Select columns", encoded_df.columns)
 
-if encoded_data is not None:
-    st.sidebar.header("Want to find insights from your CSV?")
-    if st.sidebar.button("Generate Describe Table"):
-        st.subheader("Describe Table")
-        st.write(encoded_data.describe())
-    if st.sidebar.button("Generate Info Table"):
-        st.subheader("Info Table")
-        st.write(encoded_data.info())
-    if st.sidebar.button("Generate IsNull Table"):
-        st.subheader("")
-        st.write(encoded_data.isnull().sum())
-else:
-    st.sidebar.warning("No data to describe. Please click 'Run One-Hot Encode' to generate encoded data.")
-
-
-
-classifier_name = st.sidebar.selectbox("Select Regression Model",
+    classifier_name = st.sidebar.selectbox("Select Regression Model",
                                     ("LinearRegression", "RandomForest", "XGBRFRegressor"))
 
+def describe_info(describe):
+    if describe is not None:
+        if st.sidebar.button("Generate Describe Table"):
+            st.subheader("Describe Table")
+            st.write(describe.describe())
+        if st.sidebar.button("Generate Info Table"):
+            st.subheader("Info Table")
+            st.write(describe.info())
+        if st.sidebar.button("Generate IsNull Table"):
+            st.subheader("")
+            st.write(describe.isnull().sum())
+    else:
+        st.sidebar.warning("No data to take insight from. Please click 'Run One-Hot Encode' to generate encoded data.")
+
+if __name__ == '__main__':
+    main()
 
