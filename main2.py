@@ -45,7 +45,7 @@ def main():
         st.table(raw_data.head())
         
         # get a list of categorical columns from the user to encode
-        st.sidebar.header("Select categorical columns for One-Hot Encoding")
+        st.sidebar.header("One-Hot Encoding")
         categorical_columns = st.sidebar.multiselect("Select columns", raw_data.columns)
         encoded_df = one_hot_encode_data(raw_data, categorical_columns)
 
@@ -83,12 +83,35 @@ def main():
         # get a list of categorical columns from the user that he wants to join
         st.subheader("Select columns you want to join to reduce dimensionality")
         join_columns = st.multiselect("Select columns", encoded_df.columns)
-        name = title = st.text_input('Enter the name of your new column in which you want to add your selected column data and  then press "Enter"', ' ')
-        if st.sidebar.button("Join Columns"):
-            st.subheader("New Columns")
-            new_df = columns_join(encoded_df,name, join_columns)
-            st.table(encoded_df.head())
+        name = title = st.text_input('Enter the name of your new column in which you want to add your selected column data and then press "Join Columns"', '')
+        new_df = columns_join(encoded_df,name, join_columns)
 
+        # join columns if statement
+        if st.button("Join Columns"):
+            st.subheader("Your new columns")
+            st.table(new_df.head())
+            st.sidebar.header("Would you like to visualize your new data now?")
+        
+        # generating graphs
+        graph_name = st.sidebar.selectbox("Select Graphs to View",
+                            ("Heat Map", "Pair Plot", "Hist Plot"))
+        
+        if graph_name == 'Heat Map':
+            st.subheader("Heat Map")
+            fig, ax = plt.subplots()
+            sns.heatmap(new_df.corr(), annot=True, ax=ax)
+            st.pyplot(fig)
+        elif graph_name == 'Pair Plot':
+            st.subheader("Pair Plot")
+            fig = sns.pairplot(new_df) 
+            st.pyplot(fig)
+        elif graph_name == 'Hist Plot':
+            st.subheader("Hist Plot")
+            fig,ax = plt.subplots()
+            sns.histplot(new_df['price'], kde=True, stat="density", kde_kws=dict(cut=3), alpha=.4, edgecolor=(1, 1, 1, .4))
+            st.pyplot(fig)
+            
+        # generating regression models
         classifier_name = st.sidebar.selectbox("Select Regression Model",
                                         ("LinearRegression", "RandomForest", "XGBRFRegressor"))
 
