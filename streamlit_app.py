@@ -51,14 +51,14 @@ def columns_join(data, name, columns_to_join):
 
 def main():
     global encoded_df
-    st.title("Regression Model")
+    st.title("Regression Models")
     st.write("""
     # Explore different Regression Models
     Which one gives the best result for your data?
     """)
 
     # for creating a selection box with options
-    uploaded_file = st.file_uploader("Upload a CSV file", accept_multiple_files=True)
+    uploaded_file = st.file_uploader("Upload a CSV file here", accept_multiple_files=True)
     for uploaded_file in uploaded_file:
         st.write("Data of file:", uploaded_file.name)
         raw_data = pd.read_csv(uploaded_file.name)
