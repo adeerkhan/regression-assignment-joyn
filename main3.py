@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import io
 
-from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
@@ -68,50 +67,67 @@ def main():
         # get a list of categorical columns from the user to encode
         st.sidebar.header("One-Hot Encoding")
         categorical_columns = st.sidebar.multiselect("Select columns", raw_data.columns)
-        
-
+        encoded_df = one_hot_encode_data(raw_data, categorical_columns)
         # encode button
         if st.sidebar.button("Run One-Hot Encode"):
-            st.session_state.encoded_df = one_hot_encode_data(raw_data, categorical_columns)
+            
             st.subheader("All data in numericals now")
-            st.table(st.session_state.encoded_df.head())
-            st.sidebar.header("Want to find insights from your CSV?")
+            st.table(encoded_df.head())
             
-            # generating description table
-            if st.sidebar.button("Generate Describe Table"):
-                st.subheader("Description Table")
-                st.table(st.session_state.encoded_df.describe())
-
-            # generating information table
-            if st.sidebar.button("Generate Info Table"):
-                st.subheader("Information Table")
-                info_buffer = io.StringIO()
-                st.session_state.encoded_df.info(buf=info_buffer)
-                info_text = info_buffer.getvalue()
-                st.text(info_text)
-
-            # generating isnull table
-            if st.sidebar.button("Generate IsNull Table"):
-                null_data = st.session_state.encoded_df.isnull().sum().sum()
-                
-                if null_data == 0:
-                    st.subheader("Congrats there are no Nulls in your data")
-                else:
-                    st.subheader("Fix the Nulls in your Data")
-                st.write("Total null values:", null_data)
-                st.subheader("IsNull Table")         
-                st.table(encoded_df.isnull().sum())
+        st.sidebar.header("Want to find insights from your CSV?")
+        st.session_state.insight_name = st.sidebar.selectbox("Select Table to View",
+                            ("","Describe Table", "Info Table", "IsNull Table"))
+        # generating description table
+        if st.session_state.insight_name == "Describe Table":
+            st.subheader("Description Table")
+            st.table(encoded_df.describe())
+        # generating information table
+        elif st.session_state.insight_name == "Info Table":
+            st.subheader("Information Table")
+            info_buffer = io.StringIO()
+            encoded_df.info(buf=info_buffer)
+            info_text = info_buffer.getvalue()
+            st.text(info_text)
+        # generating isnull table
+        elif st.session_state.insight_name == "IsNull Table":
+            null_data = encoded_df.isnull().sum().sum()
+            if null_data == 0:
+                st.subheader("Congrats there are no Nulls in your data")
+            else:
+                st.subheader("Fix the Nulls in your Data")
+            st.write("Total null values:", null_data)
+            st.subheader("IsNull Table")         
+            st.table(encoded_df.isnull().sum())
             
-            # get a list of categorical columns from the user that he wants to join
-            st.subheader("Select columns you want to join to reduce dimensionality")
-            join_columns = st.multiselect("Select columns", st.session_state.encoded_df.columns)
-            name = title = st.text_input('Enter the name of your new column in which you want to add your selected column data and then press "Join Columns"', '')
-            st.session_state.new_df = columns_join(st.session_state.encoded_df,name, join_columns)
+        # get a list of categorical columns from the user that he wants to join
+        st.subheader("Select columns you want to join to reduce dimensionality")
+        join_columns = st.multiselect("Select columns", encoded_df.columns)
+        name = title = st.text_input('Enter the name of your new column in which you want to add your selected column data and then press "Join Columns"', '')
+        st.session_state.new_df = columns_join(encoded_df,name, join_columns)
 
         # join columns if statement
         if st.button("Join Columns"):
             st.subheader("Your new columns")
             st.table(st.session_state.new_df.head())
+
+        st.subheader("Performing Feature Scaling")
+        selected_features = st.multiselect('Select features for scaling and then press "Standardize" ', st.session_state.new_df.columns)
+
+        if st.button("Standardize"):
+            
+            X = st.session_state.new_df[selected_features]
+            y = st.session_state.new_df.drop(columns=selected_features).values
+
+            # using sci-learn to split test and train data
+            st.session_state.X_train, st.session_state.X_test, st.session_state.y_train, st.session_state.y_test = train_test_split(X, y, test_size=0.33, random_state=369)
+
+            # applying scaling to the model
+            scaler = StandardScaler()
+            st.session_state.X_train = scaler.fit_transform(st.session_state.X_train)
+            st.session_state.X_test = scaler.transform(st.session_state.X_test)
+
+            st.subheader("Standardized columns")
+            st.table(st.session_state.X_test[:5])
         
         # generating graphs
         st.sidebar.header("Would you like to Visualize your new data now?")
@@ -132,25 +148,6 @@ def main():
             sns.histplot(st.session_state.new_df['price'], kde=True, stat="density", kde_kws=dict(cut=3), alpha=.4, edgecolor=(1, 1, 1, .4))
             st.pyplot(fig)
 
-        st.subheader("Performing Feature Scaling")
-        selected_features = st.multiselect("Select features for scaling", st.session_state.new_df.columns)
-
-        if st.button("Standardize"):
-            
-            X = st.session_state.new_df[selected_features]
-            y = st.session_state.new_df.drop(columns=selected_features).values
-
-            # using sci-learn to split test and train data
-            st.session_state.X_train, st.session_state.X_test, st.session_state.y_train, st.session_state.y_test = train_test_split(X, y, test_size=0.33, random_state=369)
-
-            # applying scaling to the model
-            scaler = StandardScaler()
-            st.session_state.X_train = scaler.fit_transform(st.session_state.X_train)
-            st.session_state.X_test = scaler.transform(st.session_state.X_test)
-
-            st.subheader("Standardized columns")
-            st.table(st.session_state.X_test[:5])
-        
         # generating regression models
         st.sidebar.header("Which Regression Model would you like to apply?")
         classifier_name = st.sidebar.selectbox("Select Regression Model",
