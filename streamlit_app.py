@@ -66,7 +66,7 @@ def main():
         
         # get a list of categorical columns from the user to encode
         st.sidebar.header("One-Hot Encoding")
-        categorical_columns = st.sidebar.multiselect("Select columns", raw_data.columns)
+        categorical_columns = st.sidebar.multiselect("Select columns", raw_data.columns, key="option_tab3")
         encoded_df = one_hot_encode_data(raw_data, categorical_columns)
         # encode button
         if st.sidebar.button("Run One-Hot Encode"):
@@ -101,7 +101,7 @@ def main():
             
         # get a list of categorical columns from the user that he wants to join
         st.subheader("Select columns you want to join to reduce dimensionality")
-        join_columns = st.multiselect("Select columns", encoded_df.columns)
+        join_columns = st.multiselect("Select columns", encoded_df.columns,key="option_tab1")
         name = title = st.text_input('Enter the name of your new column in which you want to add your selected column data and then press "Join Columns"', '')
         st.session_state.new_df = columns_join(encoded_df,name, join_columns)
 
@@ -111,7 +111,7 @@ def main():
             st.table(st.session_state.new_df.head())
 
         st.subheader("Performing Feature Scaling")
-        selected_features = st.multiselect('Select features for scaling and then press "Standardize" ', st.session_state.new_df.columns)
+        selected_features = st.multiselect('Select features for scaling and then press "Standardize" ', st.session_state.new_df.columns,key="option_tab2")
 
         if st.button("Standardize"):
             
