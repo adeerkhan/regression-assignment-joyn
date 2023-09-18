@@ -158,23 +158,23 @@ def main():
             st.subheader("Linear Regression Result")
             regressor = LinearRegression()
             regressor.fit(st.session_state.X_train, st.session_state.y_train)
-            y_pred = regressor.predict(st.session_state.X_train)
-            plot_actual_vs_predicted(st.session_state.y_train, y_pred)
-            find_metrics(st.session_state.y_train, y_pred)
+            y_pred = regressor.predict(st.session_state.X_test)
+            plot_actual_vs_predicted(st.session_state.y_test, y_pred)
+            find_metrics(st.session_state.y_test, y_pred)
         if classifier_name == 'Random Forest':
             st.subheader("Random Forest Result")
             regressor = RandomForestRegressor()
             regressor.fit(st.session_state.X_train, st.session_state.y_train)
-            y_pred = regressor.predict(st.session_state.X_train)
-            plot_actual_vs_predicted(st.session_state.y_train, y_pred)
-            find_metrics(st.session_state.y_train, y_pred)            
+            y_pred = regressor.predict(st.session_state.X_test)
+            plot_actual_vs_predicted(st.session_state.y_test, y_pred)
+            find_metrics(st.session_state.y_test, y_pred)            
         if classifier_name == 'XGBRF Regressor':
             st.subheader("XGBRF Regressor Result")
             regressor = XGBRFRegressor()
             regressor.fit(st.session_state.X_train, st.session_state.y_train)
-            y_pred = regressor.predict(st.session_state.X_train)
-            plot_actual_vs_predicted(st.session_state.y_train, y_pred)
-            find_metrics(st.session_state.y_train, y_pred)                
+            y_pred = regressor.predict(st.session_state.X_test)
+            plot_actual_vs_predicted(st.session_state.y_test, y_pred)
+            find_metrics(st.session_state.y_test, y_pred)                
             
 
 if __name__ == '__main__':
